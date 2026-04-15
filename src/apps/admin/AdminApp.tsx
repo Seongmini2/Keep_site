@@ -2,8 +2,11 @@ import { useFittingStore } from '../../store/useFittingStore';
 import { format } from 'date-fns';
 import { LayoutDashboard, Users, Activity, CheckCircle2 } from 'lucide-react';
 import { ThemeToggle } from '../../components/ThemeToggle';
+import { LanguageToggle } from '../../components/LanguageToggle';
+import { useTranslation } from 'react-i18next';
 
 export const AdminApp = () => {
+  const { t } = useTranslation();
   const { requests } = useFittingStore();
 
   const todayRequests = requests.filter(req => 
@@ -22,13 +25,14 @@ export const AdminApp = () => {
     <div className="app-container" style={{ maxWidth: '1400px' }}>
       <div className="page-header">
         <div>
-          <h1 className="text-3xl font-bold">KEEP Admin Dashboard</h1>
-          <p className="text-muted mt-2">Real-time overview of fitting requests and operations.</p>
+          <h1 className="text-3xl font-bold">{t('KEEP Admin Dashboard')}</h1>
+          <p className="text-muted mt-2">{t('Real-time overview of fitting requests and operations.')}</p>
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
+          <LanguageToggle />
           <button className="btn btn-secondary">
-            <LayoutDashboard size={18} /> Export Data
+            <LayoutDashboard size={18} /> {t('Export Data')}
           </button>
         </div>
       </div>
@@ -39,7 +43,7 @@ export const AdminApp = () => {
             <Activity size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted">Today's Requests</p>
+            <p className="text-sm font-medium text-muted">{t("Today's Requests")}</p>
             <h2 className="text-2xl font-bold">{todayRequests}</h2>
           </div>
         </div>
@@ -49,7 +53,7 @@ export const AdminApp = () => {
             <Users size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted">Awaiting Prep</p>
+            <p className="text-sm font-medium text-muted">{t('Awaiting Prep')}</p>
             <h2 className="text-2xl font-bold">{pendingRequests}</h2>
           </div>
         </div>
@@ -59,23 +63,23 @@ export const AdminApp = () => {
             <CheckCircle2 size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted">Completion Rate</p>
+            <p className="text-sm font-medium text-muted">{t('Completion Rate')}</p>
             <h2 className="text-2xl font-bold">{completionRate}%</h2>
           </div>
         </div>
       </div>
 
-      <h2 className="text-xl font-bold mb-4">Live Request Log</h2>
+      <h2 className="text-xl font-bold mb-4">{t('Live Request Log')}</h2>
       <div className="table-container">
         <table>
           <thead>
             <tr>
-              <th>Time</th>
-              <th>Req ID</th>
-              <th>Product</th>
-              <th>Spec</th>
-              <th>Status</th>
-              <th>Elapsed</th>
+              <th>{t('Time')}</th>
+              <th>{t('Req ID')}</th>
+              <th>{t('Product')}</th>
+              <th>{t('Spec')}</th>
+              <th>{t('Status')}</th>
+              <th>{t('Elapsed')}</th>
             </tr>
           </thead>
           <tbody>
@@ -88,10 +92,10 @@ export const AdminApp = () => {
                   <td className="font-semibold">{req.productName}</td>
                   <td className="text-sm">{req.color} / {req.size}</td>
                   <td>
-                    <span className={`status-badge ${req.status.toLowerCase()}`}>{req.status}</span>
+                    <span className={`status-badge ${req.status.toLowerCase()}`}>{t(req.status)}</span>
                   </td>
                   <td className="text-sm text-muted">
-                    {req.status === 'COMPLETED' ? 'Done' : `${elapsedMins} min ago`}
+                    {req.status === 'COMPLETED' ? t('Done') : `${elapsedMins} ${t('min ago')}`}
                   </td>
                 </tr>
               );
@@ -99,7 +103,7 @@ export const AdminApp = () => {
             {requests.length === 0 && (
               <tr>
                 <td colSpan={6} className="p-8 text-center text-muted">
-                  No request logs strictly available.
+                  {t('No request logs strictly available.')}
                 </td>
               </tr>
             )}

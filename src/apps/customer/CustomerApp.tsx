@@ -4,9 +4,12 @@ import { mockProducts } from '../../mock/products';
 import { useFittingStore } from '../../store/useFittingStore';
 import { useUserStore } from '../../store/useUserStore';
 import { ThemeToggle } from '../../components/ThemeToggle';
+import { LanguageToggle } from '../../components/LanguageToggle';
+import { useTranslation } from 'react-i18next';
 import type { Product } from '../../types';
 
 export const CustomerApp = () => {
+  const { t } = useTranslation();
   const addRequest = useFittingStore((state) => state.addRequest);
   const { likedProductIds, cart } = useUserStore();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -20,7 +23,7 @@ export const CustomerApp = () => {
 
   const handleFittingRequest = (product: Product, color: string, size: string) => {
     if (!color || !size) {
-      showToast('Please select color and size');
+      showToast(t('Please select color and size'));
       return;
     }
     const sessionId = localStorage.getItem('sessionId') || `session-${Math.random().toString(36).substring(2, 9)}`;
@@ -38,18 +41,19 @@ export const CustomerApp = () => {
       status: 'PENDING',
       sessionId,
     });
-    showToast('Fitting request submitted!');
+    showToast(t('Fitting request submitted!'));
   };
 
   return (
     <div className="app-container">
       <div className="page-header">
         <div>
-          <h1 className="text-3xl font-bold">KEEP</h1>
-          <p className="text-muted mt-2">Discover and request your perfect fit.</p>
+          <h1 className="text-3xl font-bold">{t('KEEP')}</h1>
+          <p className="text-muted mt-2">{t('Discover and request your perfect fit.')}</p>
         </div>
         <div className="flex gap-4 items-center">
           <ThemeToggle />
+          <LanguageToggle />
           <button className="btn-icon">
             <Heart size={20} />
             {likedProductIds.length > 0 && <span className="badge">{likedProductIds.length}</span>}
@@ -90,6 +94,7 @@ const ProductCard = ({
   onRequestFitting: (product: Product, color: string, size: string) => void;
   showToast: (msg: string) => void;
 }) => {
+  const { t } = useTranslation();
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
   
@@ -108,7 +113,7 @@ const ProductCard = ({
       size: selectedSize,
       quantity: 1
     });
-    showToast('Added to Cart!');
+    showToast(t('Added to Cart!'));
   };
 
   return (
@@ -138,7 +143,7 @@ const ProductCard = ({
         </div>
 
         <div>
-          <p className="text-xs font-medium mb-2 text-muted">COLOR</p>
+          <p className="text-xs font-medium mb-2 text-muted">{t('COLOR')}</p>
           <div className="flex flex-wrap gap-2">
             {product.colors.map(c => (
               <button 
@@ -153,7 +158,7 @@ const ProductCard = ({
         </div>
 
         <div>
-          <p className="text-xs font-medium mb-2 text-muted">SIZE</p>
+          <p className="text-xs font-medium mb-2 text-muted">{t('SIZE')}</p>
           <div className="flex flex-wrap gap-2">
             {product.sizes.map(s => (
               <button 
@@ -173,14 +178,14 @@ const ProductCard = ({
             style={{ width: '100%', borderColor: isInCart ? 'var(--primary)' : 'var(--border)' }}
             onClick={handleAddToCart}
           >
-            <ShoppingBag size={18} /> {isInCart ? `In Cart (${cartItem.quantity})` : 'Add to Cart'}
+            <ShoppingBag size={18} /> {isInCart ? `${t('In Cart')} (${cartItem.quantity})` : t('Add to Cart')}
           </button>
           <button 
             className="btn btn-primary w-full"
             style={{ width: '100%' }}
             onClick={() => onRequestFitting(product, selectedColor, selectedSize)}
           >
-            <Shirt size={18} /> Request Fitting
+            <Shirt size={18} /> {t('Request Fitting')}
           </button>
         </div>
       </div>
