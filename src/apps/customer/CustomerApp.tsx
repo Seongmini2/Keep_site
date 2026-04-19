@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shirt, Trash2, CheckCircle, PlusCircle, X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Shirt, Trash2, CheckCircle, PlusCircle, X, Layout, List } from 'lucide-react';
 import { mockProducts } from '../../mock/products';
 import { useFittingStore } from '../../store/useFittingStore';
 import { ThemeToggle } from '../../components/ThemeToggle';
@@ -14,6 +14,8 @@ export const CustomerApp = () => {
   
   const [taggedItems, setTaggedItems] = useState<TaggedProduct[]>([]);
   const [assignedRoom, setAssignedRoom] = useState<string | null>(null);
+  
+  const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
 
   // Carousel State
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -21,14 +23,14 @@ export const CustomerApp = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    // Prevent scrolling when swiping vertically heavily
-    if (dragOffset.y < -20) {
+    // Prevent scrolling when swiping vertically heavily in carousel
+    if (viewMode === 'carousel' && dragOffset.y < -20) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [dragOffset.y]);
+  }, [dragOffset.y, viewMode]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -47,7 +49,9 @@ export const CustomerApp = () => {
         color: product.colors[0],
         size: product.sizes[0],
       }];
-      setCurrentIndex(newArr.length - 1); // Jump to new item
+      if (viewMode === 'carousel') {
+        setCurrentIndex(newArr.length - 1);
+      }
       return newArr;
     });
     showToast(t('Product Tagged!'));
@@ -94,8 +98,9 @@ export const CustomerApp = () => {
     showToast(t('Fitting request submitted!'));
   };
 
-  // Touch Handlers
+  // Touch Handlers for Carousel
   const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
+    if (viewMode !== 'carousel') return;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     setTouchStart({ x: clientX, y: clientY });
@@ -103,11 +108,10 @@ export const CustomerApp = () => {
   };
   
   const handleMove = (e: React.TouchEvent | React.MouseEvent) => {
-    if (!touchStart) return;
+    if (!touchStart || viewMode !== 'carousel') return;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     
-    // Simple lock: if user scrolls down a lot, ignore horizontal
     setDragOffset({
       x: clientX - touchStart.x,
       y: clientY - touchStart.y
@@ -115,17 +119,14 @@ export const CustomerApp = () => {
   };
 
   const handleEnd = () => {
-    if (!touchStart) return;
+    if (!touchStart || viewMode !== 'carousel') return;
     
-    // Swipe Up: Dismiss
     if (dragOffset.y < -80 && Math.abs(dragOffset.y) > Math.abs(dragOffset.x)) {
       removeTaggedItem(currentIndex);
     } 
-    // Swipe Right -> Prev
     else if (dragOffset.x > 60 && currentIndex > 0) {
       setCurrentIndex(curr => curr - 1);
     } 
-    // Swipe Left -> Next
     else if (dragOffset.x < -60 && currentIndex < taggedItems.length - 1) {
       setCurrentIndex(curr => curr + 1);
     }
@@ -155,14 +156,13 @@ export const CustomerApp = () => {
         </div>
       )}
 
-      {/* Mock NFC Tagging Header */}
       {!assignedRoom && (
-        <div className="mb-6">
-          <h2 className="text-sm font-semibold mb-3 flex items-center gap-2 text-muted">
+        <div className="mb-4 text-center pb-2 border-b" style={{ borderColor: 'var(--border)' }}>
+          <h2 className="text-sm font-semibold mb-3 flex items-center justify-center gap-2 text-muted">
             <PlusCircle size={16} />
             {t('Mock NFC Tagging (Tap to simulate)')}
           </h2>
-          <div className="mock-nfc-header">
+          <div className="mock-nfc-header justify-center" style={{ flexWrap: 'wrap' }}>
             {mockProducts.map(product => (
               <button 
                 key={product.id}
@@ -177,99 +177,175 @@ export const CustomerApp = () => {
         </div>
       )}
 
-      {/* Main Carousel UI */}
+      {/* Main Tagged Items Display */}
       {!assignedRoom && taggedItems.length > 0 && (
-        <div className="animate-slide-in flex-col items-center">
-          <div className="flex justify-between w-full mb-2 px-2 text-muted text-sm font-medium">
-            <span>{t('Tagged Products')}</span>
-            <span>{currentIndex + 1} / {taggedItems.length}</span>
-          </div>
+        <div className="animate-slide-in flex-col items-center w-full">
           
-          <div 
-            className="mobile-carousel-container"
-            onTouchStart={handleStart}
-            onTouchMove={handleMove}
-            onTouchEnd={handleEnd}
-            onMouseDown={handleStart}
-            onMouseMove={touchStart ? handleMove : undefined}
-            onMouseUp={handleEnd}
-            onMouseLeave={handleEnd}
-          >
-            <div 
-              className="carousel-track"
-              style={{ 
-                transform: `translateX(calc(-${currentIndex * 100}% + ${dragOffset.x}px))`,
-                transition: touchStart ? 'none' : 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)'
-              }}
-            >
+          {/* Header & View Toggle */}
+          <div className="flex justify-between items-center w-full px-2 mb-2">
+            <span className="text-muted text-sm font-medium">
+              {t('Tagged Products')} ({taggedItems.length})
+            </span>
+            <div className="view-toggle">
+              <button 
+                className={viewMode === 'carousel' ? 'active' : ''} 
+                onClick={() => setViewMode('carousel')}
+              >
+                <Layout size={16} />
+              </button>
+              <button 
+                className={viewMode === 'list' ? 'active' : ''} 
+                onClick={() => setViewMode('list')}
+              >
+                <List size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Carousel View */}
+          {viewMode === 'carousel' && (
+            <>
+              <div 
+                className="mobile-carousel-container"
+                onTouchStart={handleStart}
+                onTouchMove={handleMove}
+                onTouchEnd={handleEnd}
+                onMouseDown={handleStart}
+                onMouseMove={touchStart ? handleMove : undefined}
+                onMouseUp={handleEnd}
+                onMouseLeave={handleEnd}
+              >
+                <div 
+                  className="carousel-track"
+                  style={{ 
+                    transform: `translateX(calc(-${currentIndex * 82}% + 9% + ${dragOffset.x}px))`,
+                    transition: touchStart ? 'none' : 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)'
+                  }}
+                >
+                  {taggedItems.map((item, idx) => {
+                    const productDef = mockProducts.find(p => p.id === item.productId)!;
+                    const isCurrent = idx === currentIndex;
+                    const isSwipingUp = isCurrent && dragOffset.y < 0;
+                    
+                    return (
+                      <div className="carousel-card-wrapper" key={`${item.productId}-${idx}`}>
+                        <div 
+                          className="toss-card" 
+                          style={{
+                            transform: isSwipingUp 
+                              ? `translateY(${dragOffset.y}px) scale(${1 - Math.abs(dragOffset.y)/2000})` 
+                              : (!isCurrent ? 'scale(0.88)' : 'scale(1)'),
+                            opacity: isSwipingUp ? 1 - Math.abs(dragOffset.y)/300 : (!isCurrent ? 0.4 : 1),
+                            transition: touchStart ? 'none' : 'all 0.4s cubic-bezier(0.25, 1, 0.5, 1)'
+                          }}
+                        >
+                          <div className="toss-img-wrapper cursor-pointer">
+                            <img src={productDef.imageUrl} alt={item.productName} draggable="false" />
+                            <button 
+                              className="toss-dismiss-hint" 
+                              onClick={(e) => { e.stopPropagation(); removeTaggedItem(idx); }}
+                            >
+                              <X size={20} />
+                            </button>
+                            
+                            {isCurrent && dragOffset.y < -30 && (
+                              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,0,0,0.2)', color: 'white', fontWeight: 'bold', fontSize: '1.2rem', backdropFilter: 'blur(2px)' }}>
+                                <Trash2 size={32} />
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="toss-options" onClick={(e) => e.stopPropagation()}>
+                            <div className="text-center">
+                              <h3 className="text-lg font-bold">{item.productName}</h3>
+                              <p className="text-xs text-muted mt-1">
+                                {t('Swipe left/right to browse, up to dismiss')}
+                              </p>
+                            </div>
+                            
+                            <div className="text-center">
+                              <div className="flex flex-wrap justify-center gap-1.5 mb-2">
+                                {productDef.colors.map(c => (
+                                  <button 
+                                    key={c}
+                                    onClick={() => updateTaggedItem(idx, 'color', c)}
+                                    className={`option-btn ${item.color === c ? 'selected' : ''}`}
+                                    style={{ padding: '0.4rem 0.8rem' }}
+                                  >
+                                    {c}
+                                  </button>
+                                ))}
+                              </div>
+
+                              <div className="flex flex-wrap justify-center gap-1.5">
+                                {productDef.sizes.map(s => (
+                                  <button 
+                                    key={s}
+                                    onClick={() => updateTaggedItem(idx, 'size', s)}
+                                    className={`option-btn ${item.size === s ? 'selected' : ''}`}
+                                    style={{ padding: '0.4rem 0.8rem' }}
+                                  >
+                                    {s}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="indicator-dots">
+                {taggedItems.map((_, idx) => (
+                  <div key={idx} className={`dot ${idx === currentIndex ? 'active' : ''}`} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* List View */}
+          {viewMode === 'list' && (
+            <div className="list-view-container w-full">
               {taggedItems.map((item, idx) => {
                 const productDef = mockProducts.find(p => p.id === item.productId)!;
-                const isCurrent = idx === currentIndex;
-                const isSwipingUp = isCurrent && dragOffset.y < 0;
-                
                 return (
-                  <div className="carousel-card-wrapper" key={`${item.productId}-${idx}`}>
-                    <div 
-                      className="toss-card" 
-                      style={{
-                        transform: isSwipingUp 
-                          ? `translateY(${dragOffset.y}px) scale(${1 - Math.abs(dragOffset.y)/2000})` 
-                          : (!isCurrent ? 'scale(0.92)' : 'scale(1)'),
-                        opacity: isSwipingUp ? 1 - Math.abs(dragOffset.y)/300 : (!isCurrent ? 0.6 : 1),
-                        transition: touchStart ? 'none' : 'all 0.4s cubic-bezier(0.25, 1, 0.5, 1)'
-                      }}
-                    >
-                      <div className="toss-img-wrapper cursor-pointer">
-                        <img src={productDef.imageUrl} alt={item.productName} draggable="false" />
-                        <button 
-                          className="toss-dismiss-hint" 
-                          onClick={(e) => { e.stopPropagation(); removeTaggedItem(idx); }}
-                        >
-                          <X size={20} />
+                  <div key={`${item.productId}-${idx}`} className="list-card">
+                    <img src={productDef.imageUrl} alt={item.productName} />
+                    <div className="list-card-content">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-bold">{item.productName}</h3>
+                        <button className="text-muted hover:text-red-500" onClick={() => removeTaggedItem(idx)}>
+                          <X size={18} />
                         </button>
-                        
-                        {/* Swipe Hint Overlay */}
-                        {isCurrent && dragOffset.y < -30 && (
-                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,0,0,0.2)', color: 'white', fontWeight: 'bold', fontSize: '1.2rem', backdropFilter: 'blur(2px)' }}>
-                            <Trash2 size={32} />
-                          </div>
-                        )}
                       </div>
                       
-                      <div className="toss-options" onClick={(e) => e.stopPropagation()}>
-                        <div className="text-center">
-                          <h3 className="text-xl font-bold">{item.productName}</h3>
-                          <p className="text-sm text-muted mt-1 swipe-hint">
-                            {t('Swipe left/right to browse, up to dismiss')}
-                          </p>
+                      <div className="flex flex-col gap-2 mt-1">
+                        <div className="flex gap-1.5 flex-wrap">
+                          {productDef.colors.map(c => (
+                            <button 
+                              key={c}
+                              onClick={() => updateTaggedItem(idx, 'color', c)}
+                              className={`option-btn ${item.color === c ? 'selected' : ''}`}
+                              style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}
+                            >
+                              {c}
+                            </button>
+                          ))}
                         </div>
-                        
-                        <div className="mt-2 text-center">
-                          <div className="flex flex-wrap justify-center gap-2 mb-4">
-                            {productDef.colors.map(c => (
-                              <button 
-                                key={c}
-                                onClick={() => updateTaggedItem(idx, 'color', c)}
-                                className={`option-btn ${item.color === c ? 'selected' : ''}`}
-                                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-                              >
-                                {c}
-                              </button>
-                            ))}
-                          </div>
-
-                          <div className="flex flex-wrap justify-center gap-2">
-                            {productDef.sizes.map(s => (
-                              <button 
-                                key={s}
-                                onClick={() => updateTaggedItem(idx, 'size', s)}
-                                className={`option-btn ${item.size === s ? 'selected' : ''}`}
-                                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-                              >
-                                {s}
-                              </button>
-                            ))}
-                          </div>
+                        <div className="flex gap-1.5 flex-wrap">
+                          {productDef.sizes.map(s => (
+                            <button 
+                              key={s}
+                              onClick={() => updateTaggedItem(idx, 'size', s)}
+                              className={`option-btn ${item.size === s ? 'selected' : ''}`}
+                              style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}
+                            >
+                              {s}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -277,13 +353,8 @@ export const CustomerApp = () => {
                 );
               })}
             </div>
-          </div>
+          )}
 
-          <div className="indicator-dots">
-            {taggedItems.map((_, idx) => (
-              <div key={idx} className={`dot ${idx === currentIndex ? 'active' : ''}`} />
-            ))}
-          </div>
         </div>
       )}
 
