@@ -62,6 +62,13 @@ const resources = {
       "In Cart": "장바구니 담김",
       "Add to Cart": "장바구니 담기",
       "Request Fitting": "피팅 번호표 발급 / 요청",
+      "NFC Tagging System": "NFC 태깅 시스템",
+      "Mock NFC Tagging (Tap to simulate)": "모의 NFC 태깅 (버튼을 눌러 태깅)",
+      "Swipe left/right to browse, up to dismiss": "좌우로 넘겨보기, 위로 쓸어올려 제거",
+      "No products tagged yet.": "아직 태깅된 상품이 없습니다.",
+      "Tap a product above to tag it.": "상단의 상품을 눌러 태깅해보세요.",
+      "Tagged Products": "태깅된 상품",
+      "Confirm & Request Fitting": "피팅룸 배정 받기",
       
       // Admin
       "KEEP Admin Dashboard": "KEEP 관리자 대시보드",

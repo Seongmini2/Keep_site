@@ -189,3 +189,130 @@ tr:hover { background-color: var(--surface-hover); }
 .option-btn.selected {
   background: var(--primary); border-color: var(--primary); color: #fff;
 }
+
+/* Mobile Carousel UI */
+.mobile-carousel-container {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  min-height: 520px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin: 1rem 0;
+  touch-action: none; /* enable smooth pan without browser scroll */
+}
+
+.carousel-track {
+  display: flex;
+  width: 100%;
+  flex: 1;
+  align-items: center;
+}
+
+.carousel-card-wrapper {
+  flex: 0 0 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 1.5rem;
+}
+
+.toss-card {
+  width: 100%;
+  max-width: 400px;
+  height: 100%;
+  max-height: 600px;
+  background: var(--surface);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+[data-theme="dark"] .toss-card {
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border);
+}
+
+.toss-img-wrapper {
+  width: 100%;
+  flex: 1;
+  min-height: 250px;
+  position: relative;
+}
+
+.toss-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.toss-dismiss-hint {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0,0,0,0.4);
+  color: white;
+  padding: 0.6rem;
+  border-radius: 50%;
+  backdrop-filter: blur(8px);
+  border: none;
+}
+
+.toss-options {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: var(--surface);
+}
+
+.mock-nfc-header {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.5rem 0 1rem 0;
+  scrollbar-width: none;
+}
+.mock-nfc-header::-webkit-scrollbar {
+  display: none;
+}
+
+.mock-nfc-chip {
+  padding: 0.75rem 1.25rem;
+  border-radius: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mock-nfc-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.indicator-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dot.active {
+  background: var(--primary);
+  width: 24px;
+}
