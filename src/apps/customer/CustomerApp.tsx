@@ -1,15 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Shirt, Trash2, CheckCircle, PlusCircle, X, Layout, List } from 'lucide-react';
 import { mockProducts } from '../../mock/products';
-import { useFittingStore } from '../../store/useFittingStore';
+import { useRequests } from '../../hooks/useRequests';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { LanguageToggle } from '../../components/LanguageToggle';
 import { useTranslation } from 'react-i18next';
-import type { TaggedProduct } from '../../types';
+import type { TaggedProduct } from '../../types/request';
+
+/** 세션 ID를 가져오거나 신규 생성합니다 */
+const getOrCreateSessionId = (): string => {
+  const existing = localStorage.getItem('keep-session-id');
+  if (existing) return existing;
+  const newId = `session-${Math.random().toString(36).substring(2, 9)}`;
+  localStorage.setItem('keep-session-id', newId);
+  return newId;
+};
 
 export const CustomerApp = () => {
   const { t } = useTranslation();
-  const addRequest = useFittingStore((state) => state.addRequest);
+  // useRequests hook — service 계층을 통해 요청 생성/조회
+  const { createRequest } = useRequests();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
   const [taggedItems, setTaggedItems] = useState<TaggedProduct[]>([]);
@@ -73,26 +83,20 @@ export const CustomerApp = () => {
     });
   };
 
-  const handleFittingRequest = () => {
+  const handleFittingRequest = async () => {
     if (taggedItems.length === 0) return;
-    
-    const randomRoomId = Math.floor(Math.random() * 4) + 1;
-    const roomStr = randomRoomId.toString();
 
-    const sessionId = localStorage.getItem('sessionId') || `session-${Math.random().toString(36).substring(2, 9)}`;
-    if (!localStorage.getItem('sessionId')) {
-      localStorage.setItem('sessionId', sessionId);
-    }
+    const sessionId = getOrCreateSessionId();
 
-    addRequest({
-      requestId: `req-${Date.now()}`,
+    // service.createRequest() 호출 — POST /requests 로 쉽게 교체 가능
+    const created = await createRequest({
       products: [...taggedItems],
-      fittingRoomId: roomStr,
+      fittingRoomId: '', // mock service에서 자동 배정
       status: 'pending',
       sessionId,
     });
-    
-    setAssignedRoom(roomStr);
+
+    setAssignedRoom(created.fittingRoomId);
     setTaggedItems([]);
     setCurrentIndex(0);
     showToast(t('Fitting request submitted!'));

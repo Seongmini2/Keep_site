@@ -1,4 +1,6 @@
-export type FittingStatus = 'pending' | 'assigned' | 'completed';
+// 이전 호환성 유지용 re-export
+// 새 코드는 src/types/request.ts 를 직접 import 하세요.
+export type { FittingStatus, TaggedProduct, FittingRequest } from './request';
 
 export interface Product {
   id: string;
@@ -7,20 +9,4 @@ export interface Product {
   imageUrl: string;
   colors: string[];
   sizes: string[];
-}
-
-export interface TaggedProduct {
-  productId: string;
-  productName: string;
-  color: string;
-  size: string;
-}
-
-export interface FittingRequest {
-  requestId: string;
-  products: TaggedProduct[];
-  fittingRoomId: string;
-  status: FittingStatus;
-  requestTime: number;
-  sessionId: string;
 }

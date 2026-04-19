@@ -1,19 +1,19 @@
-import { useFittingStore } from '../../store/useFittingStore';
 import { format } from 'date-fns';
 import { LayoutDashboard, Users, Activity, CheckCircle2 } from 'lucide-react';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { LanguageToggle } from '../../components/LanguageToggle';
 import { useTranslation } from 'react-i18next';
+import { useRequests, useAdminStats } from '../../hooks/useRequests';
 
 export const AdminApp = () => {
   const { t } = useTranslation();
-  const { requests } = useFittingStore();
 
-  const totalRequests = requests.length;
-  const pendingRequests = requests.filter(req => req.status === 'pending').length;
-  const preparingRequests = requests.filter(req => req.status === 'assigned').length;
-  const completedRequests = requests.filter(req => req.status === 'completed').length;
-  
+  // useRequests: 요청 목록 (GET /requests 로 교체 가능)
+  const { requests } = useRequests();
+
+  // useAdminStats: 통계 (GET /admin/stats 로 교체 가능)
+  const stats = useAdminStats();
+
   return (
     <div className="app-container" style={{ maxWidth: '1400px' }}>
       <div className="page-header">
@@ -30,14 +30,15 @@ export const AdminApp = () => {
         </div>
       </div>
 
+      {/* 통계 카드 — useAdminStats() / GET /admin/stats */}
       <div className="grid-cols-4 mb-8">
         <div className="card p-6 flex items-center gap-4 animate-slide-in" style={{ animationDelay: '0ms' }}>
           <div style={{ background: '#e0e7ff', padding: '1rem', borderRadius: '50%', color: '#4f46e5' }}>
             <Activity size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted">{t("Total Requests")}</p>
-            <h2 className="text-2xl font-bold">{totalRequests}</h2>
+            <p className="text-sm font-medium text-muted">{t('Total Requests')}</p>
+            <h2 className="text-2xl font-bold">{stats.total}</h2>
           </div>
         </div>
 
@@ -47,31 +48,32 @@ export const AdminApp = () => {
           </div>
           <div>
             <p className="text-sm font-medium text-muted">{t('Awaiting Prep (Pending)')}</p>
-            <h2 className="text-2xl font-bold">{pendingRequests}</h2>
+            <h2 className="text-2xl font-bold">{stats.pending}</h2>
           </div>
         </div>
 
-        <div className="card p-6 flex items-center gap-4 animate-slide-in" style={{ animationDelay: '50ms' }}>
+        <div className="card p-6 flex items-center gap-4 animate-slide-in" style={{ animationDelay: '100ms' }}>
           <div style={{ background: '#bfdbfe', padding: '1rem', borderRadius: '50%', color: '#2563eb' }}>
             <Users size={24} />
           </div>
           <div>
             <p className="text-sm font-medium text-muted">{t('In Progress (Assigned)')}</p>
-            <h2 className="text-2xl font-bold">{preparingRequests}</h2>
+            <h2 className="text-2xl font-bold">{stats.assigned}</h2>
           </div>
         </div>
 
-        <div className="card p-6 flex items-center gap-4 animate-slide-in" style={{ animationDelay: '100ms' }}>
+        <div className="card p-6 flex items-center gap-4 animate-slide-in" style={{ animationDelay: '150ms' }}>
           <div style={{ background: '#dcfce7', padding: '1rem', borderRadius: '50%', color: '#16a34a' }}>
             <CheckCircle2 size={24} />
           </div>
           <div>
             <p className="text-sm font-medium text-muted">{t('Completed Requests')}</p>
-            <h2 className="text-2xl font-bold">{completedRequests}</h2>
+            <h2 className="text-2xl font-bold">{stats.completed}</h2>
           </div>
         </div>
       </div>
 
+      {/* 요청 로그 테이블 — useRequests() / GET /requests */}
       <h2 className="text-xl font-bold mb-4">{t('Live Request Log')}</h2>
       <div className="table-container">
         <table>
@@ -92,11 +94,12 @@ export const AdminApp = () => {
                 <tr key={req.requestId}>
                   <td className="font-medium">{format(req.requestTime, 'HH:mm:ss')}</td>
                   <td className="text-sm text-muted">{req.requestId.slice(-6)}</td>
-                  <td className="font-bold flex justify-center items-center h-full">Room {req.fittingRoomId}</td>
+                  <td className="font-bold" style={{ textAlign: 'center' }}>Room {req.fittingRoomId}</td>
                   <td className="text-sm">
                     {req.products.length > 0 ? (
                       <span title={req.products.map(p => `${p.productName} (${p.color}/${p.size})`).join(', ')}>
-                        {req.products[0].productName} {req.products.length > 1 ? `+${req.products.length - 1} more` : ''}
+                        {req.products[0].productName}
+                        {req.products.length > 1 ? ` +${req.products.length - 1} more` : ''}
                       </span>
                     ) : '-'}
                   </td>

@@ -1,15 +1,23 @@
-import { useFittingStore } from '../../store/useFittingStore';
-import { Clock, CheckSquare, Shirt, MapPin } from 'lucide-react';
+import { useRequests } from '../../hooks/useRequests';
+import { Clock, CheckSquare, Shirt } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ko, enUS } from 'date-fns/locale';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { LanguageToggle } from '../../components/LanguageToggle';
 import { useTranslation } from 'react-i18next';
 import { mockProducts } from '../../mock/products';
+import type { FittingStatus } from '../../types/request';
 
 export const StaffApp = () => {
   const { t, i18n } = useTranslation();
-  const { requests, updateRequestStatus } = useFittingStore();
+
+  // useRequests hook — getRequests()/updateStatus() 를 통해 서비스 계층 사용
+  // 실제 API 연동 시 hook 내부만 변경, 이 컴포넌트는 수정 불필요
+  const { requests, updateStatus } = useRequests();
+
+  const handleStatusChange = async (requestId: string, nextStatus: FittingStatus) => {
+    await updateStatus(requestId, nextStatus);
+  };
 
   return (
     <div className="app-container">
@@ -39,24 +47,29 @@ export const StaffApp = () => {
                     <span className={`status-badge ${req.status}`}>{t(req.status)}</span>
                   </div>
                   <div className="text-sm text-muted flex items-center gap-1">
-                    <Clock size={14}/> {formatDistanceToNow(req.requestTime, { addSuffix: true, locale: i18n.language === 'ko' ? ko : enUS })}
+                    <Clock size={14}/>
+                    {formatDistanceToNow(req.requestTime, {
+                      addSuffix: true,
+                      locale: i18n.language === 'ko' ? ko : enUS,
+                    })}
                   </div>
                 </div>
-                
+
+                {/* 상태 변경 버튼 — PATCH /requests/:id/status 로 교체 가능 */}
                 <div className="flex gap-2">
                   {req.status === 'pending' && (
-                    <button 
+                    <button
                       className="btn btn-primary"
-                      onClick={() => updateRequestStatus(req.requestId, 'assigned')}
+                      onClick={() => handleStatusChange(req.requestId, 'assigned')}
                     >
                       {t('Start Preparing')}
                     </button>
                   )}
                   {req.status === 'assigned' && (
-                    <button 
+                    <button
                       className="btn btn-secondary"
                       style={{ background: '#10b981', color: 'white', borderColor: '#10b981' }}
-                      onClick={() => updateRequestStatus(req.requestId, 'completed')}
+                      onClick={() => handleStatusChange(req.requestId, 'completed')}
                     >
                       <CheckSquare size={18} /> {t('Complete')}
                     </button>
@@ -72,8 +85,14 @@ export const StaffApp = () => {
                   {req.products.map((item, idx) => {
                     const productDef = mockProducts.find(p => p.id === item.productId);
                     return (
-                      <div key={idx} className="flex gap-3 items-center p-3" style={{ background: 'var(--surface)', borderRadius: '8px' }}>
-                        {productDef && <img src={productDef.imageUrl} alt={item.productName} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />}
+                      <div key={idx} className="flex gap-3 items-center p-3" style={{ background: 'var(--surface-hover)', borderRadius: '8px' }}>
+                        {productDef && (
+                          <img
+                            src={productDef.imageUrl}
+                            alt={item.productName}
+                            style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
+                          />
+                        )}
                         <div>
                           <p className="font-medium">{item.productName}</p>
                           <p className="text-sm text-muted flex gap-2 mt-1">
