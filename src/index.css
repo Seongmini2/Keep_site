@@ -64,7 +64,7 @@ a { text-decoration: none; color: inherit; }
   font-size: 0.875rem; font-weight: 500; text-transform: capitalize;
 }
 .status-badge.pending { background: var(--status-pending-bg); color: var(--status-pending-fg); }
-.status-badge.preparing { background: var(--status-preparing-bg); color: var(--status-preparing-fg); }
+.status-badge.preparing, .status-badge.assigned { background: var(--status-preparing-bg); color: var(--status-preparing-fg); }
 .status-badge.ready { background: var(--status-ready-bg); color: var(--status-ready-fg); }
 .status-badge.completed { background: var(--status-completed-bg); color: var(--status-completed-fg); }
 .status-badge.canceled { background: var(--status-canceled-bg); color: var(--status-canceled-fg); }

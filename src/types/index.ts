@@ -1,4 +1,4 @@
-export type FittingStatus = 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELED';
+export type FittingStatus = 'pending' | 'assigned' | 'completed';
 
 export interface Product {
   id: string;
@@ -9,15 +9,18 @@ export interface Product {
   sizes: string[];
 }
 
-export interface FittingRequest {
-  requestId: string;
+export interface TaggedProduct {
   productId: string;
   productName: string;
-  imageUrl: string;
   color: string;
   size: string;
+}
+
+export interface FittingRequest {
+  requestId: string;
+  products: TaggedProduct[];
+  fittingRoomId: string;
   status: FittingStatus;
-  createdAt: number;
-  updatedAt: number;
-  sessionId: string; // The user who made the request
+  requestTime: number;
+  sessionId: string;
 }

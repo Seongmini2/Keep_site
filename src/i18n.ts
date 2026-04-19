@@ -99,15 +99,25 @@ const resources = {
   }
 };
 
+const savedLang = localStorage.getItem('keep-language') || 'ko';
+
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: "en", // Default language
-    fallbackLng: "en",
+    lng: savedLang, // Default language
+    fallbackLng: "ko",
     interpolation: {
       escapeValue: false 
     }
   });
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'keep-language' && e.newValue) {
+      i18n.changeLanguage(e.newValue);
+    }
+  });
+}
 
 export default i18n;
