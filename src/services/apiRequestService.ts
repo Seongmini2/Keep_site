@@ -1,6 +1,10 @@
 // ============================================================
 // KEEP — API Request Service (IRequestService 구현체)
 //
+// ⚠️ 백엔드 구조: 요청 1개 = 상품 1개
+//    createRequest: 단일 상품 1개 → POST /api/requests 1회 호출
+//    여러 상품 분기 처리는 useRequests.createRequests()에서 담당
+//
 // 현재: mock 응답을 반환하는 형태로 구현됨 (fetch 주석 처리)
 // 교체: BASE_URL 변경 + fetch 주석 해제 → 실제 API 연동 완료
 //
@@ -15,45 +19,41 @@ import type { IRequestService } from './requestService';
 import type {
   FittingRequest,
   FittingStatus,
-  CreateFittingRequestBody,
+  CreateSingleRequestBody,
   GetRequestsResponse,
   AdminStats,
 } from '../types/request';
 
 // ------------------------------------------------------------
 // BASE_URL — 백엔드 서버 주소
-// 실제 연동 시: 'https://api.keep-service.com' 등으로 교체
+// 실제 연동 시 아래 값을 실제 서버 주소로 교체
 // ------------------------------------------------------------
 const BASE_URL = 'https://api.keep-service.com'; // TODO: 실제 서버 주소로 교체
 
 // ============================================================
-// 내부 API 응답 타입 (백엔드 응답 구조가 다를 경우를 대비)
-// 실제 API 명세에 맞게 조정하세요.
+// 내부 API 응답 타입 (백엔드 응답 snake_case 구조)
+// 실제 API 명세에 맞게 조정
 // ============================================================
 
-/** 백엔드 GET /requests 단일 항목 응답 구조 (예시) */
+/** 백엔드 /api/requests 단일 항목 응답 구조 */
 interface ApiRequestItem {
-  request_id: string;          // snake_case → camelCase 변환 필요
-  products: {
-    product_id: string;
-    product_name: string;
-    color: string;
-    size: string;
-  }[];
+  request_id: string;
+  product_id: string;
+  product_name: string;
+  color: string;
+  size: string;
   fitting_room_id: string;
   status: FittingStatus;
-  request_time: string;        // ISO 8601 → Unix timestamp 변환 필요
+  request_time: string;   // ISO 8601 → Unix timestamp 변환 필요
   session_id: string;
 }
 
-/** 백엔드 POST /requests 바디 구조 (예시) */
+/** 백엔드 POST /api/requests 바디 구조 */
 interface ApiCreateRequestBody {
-  products: {
-    product_id: string;
-    product_name: string;
-    color: string;
-    size: string;
-  }[];
+  product_id: string;
+  product_name: string;
+  color: string;
+  size: string;
   fitting_room_id: string;
   status: FittingStatus;
   session_id: string;
@@ -67,34 +67,30 @@ interface ApiCreateRequestBody {
  * mapApiResponseToRequest
  * 백엔드 응답(snake_case) → 프론트 FittingRequest(camelCase) 변환
  */
-function mapApiResponseToRequest(apiItem: ApiRequestItem): FittingRequest {
+function mapApiResponseToRequest(item: ApiRequestItem): FittingRequest {
   return {
-    requestId: apiItem.request_id,
-    products: apiItem.products.map(p => ({
-      productId: p.product_id,
-      productName: p.product_name,
-      color: p.color,
-      size: p.size,
-    })),
-    fittingRoomId: apiItem.fitting_room_id,
-    status: apiItem.status,
-    requestTime: new Date(apiItem.request_time).getTime(), // ISO 8601 → ms
-    sessionId: apiItem.session_id,
+    requestId: item.request_id,
+    productId: item.product_id,
+    productName: item.product_name,
+    color: item.color,
+    size: item.size,
+    fittingRoomId: item.fitting_room_id,
+    status: item.status,
+    requestTime: new Date(item.request_time).getTime(), // ISO 8601 → ms
+    sessionId: item.session_id,
   };
 }
 
 /**
  * mapRequestToApiBody
- * 프론트 CreateFittingRequestBody → 백엔드 POST 바디(snake_case) 변환
+ * 프론트 CreateSingleRequestBody → 백엔드 POST 바디(snake_case) 변환
  */
-function mapRequestToApiBody(body: CreateFittingRequestBody): ApiCreateRequestBody {
+function mapRequestToApiBody(body: CreateSingleRequestBody): ApiCreateRequestBody {
   return {
-    products: body.products.map(p => ({
-      product_id: p.productId,
-      product_name: p.productName,
-      color: p.color,
-      size: p.size,
-    })),
+    product_id: body.productId,
+    product_name: body.productName,
+    color: body.color,
+    size: body.size,
     fitting_room_id: body.fittingRoomId,
     status: body.status,
     session_id: body.sessionId,
@@ -118,9 +114,9 @@ const assignFittingRoom = (): string =>
 export const apiRequestService: IRequestService = {
 
   // ----------------------------------------------------------
-  // [POST /requests]  피팅 요청 생성
+  // [POST /api/requests]  피팅 요청 생성 (상품 1개)
   // ----------------------------------------------------------
-  async createRequest(body: CreateFittingRequestBody): Promise<FittingRequest> {
+  async createRequest(body: CreateSingleRequestBody): Promise<FittingRequest> {
     // ✅ [테스트용 로그] API 호출 payload 확인
     console.log('[apiRequestService] createRequest payload:', body);
     console.log('[apiRequestService] mapped API body:', mapRequestToApiBody(body));
@@ -128,7 +124,7 @@ export const apiRequestService: IRequestService = {
     try {
       // ▼▼▼▼▼ 실제 fetch — 백엔드 준비 완료 시 아래 블록 주석 해제 ▼▼▼▼▼
       /*
-      const response = await fetch(`${BASE_URL}/requests`, {
+      const response = await fetch(`${BASE_URL}/api/requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mapRequestToApiBody(body)),
@@ -150,7 +146,7 @@ export const apiRequestService: IRequestService = {
 
       const newRequest: FittingRequest = {
         ...body,
-        requestId: `req-${Date.now()}`,
+        requestId: `req-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         fittingRoomId: body.fittingRoomId || assignFittingRoom(),
         requestTime: Date.now(),
       };
@@ -162,19 +158,18 @@ export const apiRequestService: IRequestService = {
 
     } catch (error) {
       console.error('[apiRequestService] createRequest 에러:', error);
-      // 향후 UI 에러 처리: throw error 또는 에러 상태 관리 연결
       throw error;
     }
   },
 
   // ----------------------------------------------------------
-  // [GET /requests]  전체 요청 목록
+  // [GET /api/requests]  전체 요청 목록
   // ----------------------------------------------------------
   async getRequests(): Promise<GetRequestsResponse> {
     try {
       // ▼▼▼▼▼ 실제 fetch — 백엔드 준비 완료 시 아래 블록 주석 해제 ▼▼▼▼▼
       /*
-      const response = await fetch(`${BASE_URL}/requests`, {
+      const response = await fetch(`${BASE_URL}/api/requests`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -204,13 +199,13 @@ export const apiRequestService: IRequestService = {
   },
 
   // ----------------------------------------------------------
-  // [PATCH /requests/:id/status]  상태 변경
+  // [PATCH /api/requests/:id]  상태 변경
   // ----------------------------------------------------------
   async updateStatus(requestId: string, status: FittingStatus): Promise<FittingRequest> {
     try {
       // ▼▼▼▼▼ 실제 fetch — 백엔드 준비 완료 시 아래 블록 주석 해제 ▼▼▼▼▼
       /*
-      const response = await fetch(`${BASE_URL}/requests/${requestId}/status`, {
+      const response = await fetch(`${BASE_URL}/api/requests/${requestId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),

@@ -19,7 +19,7 @@ const getOrCreateSessionId = (): string => {
 export const CustomerApp = () => {
   const { t } = useTranslation();
   // useRequests hook — service 계층을 통해 요청 생성/조회
-  const { createRequest } = useRequests();
+  const { createRequests } = useRequests();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
   const [taggedItems, setTaggedItems] = useState<TaggedProduct[]>([]);
@@ -88,15 +88,19 @@ export const CustomerApp = () => {
 
     const sessionId = getOrCreateSessionId();
 
-    // service.createRequest() 호출 — POST /requests 로 쉽게 교체 가능
-    const created = await createRequest({
+    // ⚠️ 백엔드 구조: 요청 1개 = 상품 1개
+    // createRequests: 상품 배열 → 상품별 개별 API 요청 생성
+    // 상품 3개 태깅 → POST /api/requests 3회 호출 (병렬)
+    const results = await createRequests({
       products: [...taggedItems],
-      fittingRoomId: '', // mock service에서 자동 배정
+      fittingRoomId: '', // service에서 자동 배정
       status: 'pending',
       sessionId,
     });
 
-    setAssignedRoom(created.fittingRoomId);
+    // 첫 번째 요청의 피팅룸을 UI에 표시
+    const firstRoom = results[0]?.fittingRoomId ?? '';
+    setAssignedRoom(firstRoom);
     setTaggedItems([]);
     setCurrentIndex(0);
     showToast(t('Fitting request submitted!'));

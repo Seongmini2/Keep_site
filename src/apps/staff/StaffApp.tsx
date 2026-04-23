@@ -77,33 +77,34 @@ export const StaffApp = () => {
                 </div>
               </div>
 
+              {/* 단일 상품 표시 — 백엔드 구조: 요청 1개 = 상품 1개 */}
               <div>
                 <h4 className="text-sm font-semibold text-muted mb-3 flex items-center gap-2">
-                  <Shirt size={16} /> {t('Requested Items')} ({req.products.length})
+                  <Shirt size={16} /> {t('Requested Item')}
                 </h4>
-                <div className="flex flex-col gap-3">
-                  {req.products.map((item, idx) => {
-                    const productDef = mockProducts.find(p => p.id === item.productId);
+                <div className="flex gap-3 items-center p-3" style={{ background: 'var(--surface-hover)', borderRadius: '8px' }}>
+                  {(() => {
+                    const productDef = mockProducts.find(p => p.id === req.productId);
                     return (
-                      <div key={idx} className="flex gap-3 items-center p-3" style={{ background: 'var(--surface-hover)', borderRadius: '8px' }}>
+                      <>
                         {productDef && (
                           <img
                             src={productDef.imageUrl}
-                            alt={item.productName}
+                            alt={req.productName}
                             style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
                           />
                         )}
                         <div>
-                          <p className="font-medium">{item.productName}</p>
+                          <p className="font-medium">{req.productName}</p>
                           <p className="text-sm text-muted flex gap-2 mt-1">
-                            <span>{t('Color')}: <strong style={{ color: 'var(--text-primary)' }}>{item.color}</strong></span>
+                            <span>{t('Color')}: <strong style={{ color: 'var(--text-primary)' }}>{req.color}</strong></span>
                             <span>|</span>
-                            <span>{t('Size')}: <strong style={{ color: 'var(--text-primary)' }}>{item.size}</strong></span>
+                            <span>{t('Size')}: <strong style={{ color: 'var(--text-primary)' }}>{req.size}</strong></span>
                           </p>
                         </div>
-                      </div>
+                      </>
                     );
-                  })}
+                  })()}
                 </div>
               </div>
             </div>

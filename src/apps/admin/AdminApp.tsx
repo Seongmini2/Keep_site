@@ -82,7 +82,7 @@ export const AdminApp = () => {
               <th>{t('Time')}</th>
               <th>{t('Req ID')}</th>
               <th>{t('Fitting Room')}</th>
-              <th>{t('Products (Count)')}</th>
+              <th>{t('Product')}</th>
               <th>{t('Status')}</th>
               <th>{t('Elapsed')}</th>
             </tr>
@@ -95,13 +95,14 @@ export const AdminApp = () => {
                   <td className="font-medium">{format(req.requestTime, 'HH:mm:ss')}</td>
                   <td className="text-sm text-muted">{req.requestId.slice(-6)}</td>
                   <td className="font-bold" style={{ textAlign: 'center' }}>Room {req.fittingRoomId}</td>
+                  {/* 단일 상품 — 백엔드 구조: 요청 1개 = 상품 1개 */}
                   <td className="text-sm">
-                    {req.products.length > 0 ? (
-                      <span title={req.products.map(p => `${p.productName} (${p.color}/${p.size})`).join(', ')}>
-                        {req.products[0].productName}
-                        {req.products.length > 1 ? ` +${req.products.length - 1} more` : ''}
-                      </span>
-                    ) : '-'}
+                    <span title={`${req.color} / ${req.size}`}>
+                      {req.productName}
+                    </span>
+                    <span className="text-muted" style={{ fontSize: '0.75rem', marginLeft: '4px' }}>
+                      ({req.color} / {req.size})
+                    </span>
                   </td>
                   <td>
                     <span className={`status-badge ${req.status}`}>{t(req.status)}</span>
